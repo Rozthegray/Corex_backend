@@ -71,3 +71,5 @@ weasyprint==70.0
 webencodings==0.6.1
 websockets==17.2
 zopfli==0.4.3
+PyMuPDF
+fpdf2
