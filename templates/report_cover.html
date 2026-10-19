@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }} - Seminar Report</title>
+    <style>
+        body { 
+            font-family: "Times New Roman", Times, serif; 
+            padding: 40px 60px; 
+            text-align: center; 
+            color: #000;
+            line-height: 1.6;
+        }
+        .logo {
+            width: 150px;
+            height: auto;
+            margin-bottom: 40px;
+            margin-top: 20px;
+        }
+        .title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+        }
+        .section-text {
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        .student-info, .lecturer-info {
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 5px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        .fulfillment-text {
+            font-size: 14px;
+            margin: 40px auto;
+            max-width: 80%;
+            line-height: 1.5;
+            text-transform: uppercase;
+        }
+        .page-break {
+            page-break-before: always;
+        }
+        /* Styles for the actual report content that follows the cover */
+        .content-body {
+            text-align: left;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <!-- FRONT COVER PAGE -->
+    <img src="{{ absolute_logo_path }}" class="logo" alt="Institution Logo">
+    
+    <div class="title">{{ title }}</div>
+    
+    <div class="section-text">A SEMINAR REPORT</div>
+    
+    <div class="section-text">PRESENTED TO</div>
+    
+    <div class="section-text" style="font-weight: bold;">
+        THE DEPARTMENT OF {{ department | upper }}<br>
+        SCHOOL OF ENGINEERING
+    </div>
+    
+    <div class="section-text">BY:</div>
+    
+    <div class="student-info">{{ student_name }}</div>
+    <div class="student-info">{{ matric_number }}</div>
+    
+    <div class="fulfillment-text">
+        A SEMINAR REPORT SUBMITTED IN PARTIAL FULFILLMENT OF THE REQUIREMENT FOR THE AWARD OF THE HIGHER NATIONAL DIPLOMA (HND) IN {{ department | upper }}.
+    </div>
+    
+    <div class="section-text">SUPERVISED BY:</div>
+    <div class="lecturer-info">{{ lecturer_name }}</div>
+    
+    <div class="section-text" style="margin-top: 30px;">2025/2026</div>
+
+    <!-- PAGE BREAK -->
+    <div class="page-break"></div>
+
+    <!-- REPORT CONTENT BEGINS HERE -->
+    <div class="content-body">
+        {{ generated_report_html | safe }}
+    </div>
+</body>
+</html>
