@@ -60,6 +60,8 @@ origins = [
     "http://localhost:3001",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:3001",
+    "https://corex-frontend-rose.vercel.app",  # Added your live Vercel domain
+    "*"  # Added wildcard to support dynamic Vercel deployment preview URLs
 ]
 
 app.add_middleware(
