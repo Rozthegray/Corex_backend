@@ -74,3 +74,8 @@ zopfli==0.4.3
 PyMuPDF
 fpdf2
 pytesseract
+pdf2image
+pinecone-client
+fpdf2
+PyMuPDF
+psycopg2-binary
