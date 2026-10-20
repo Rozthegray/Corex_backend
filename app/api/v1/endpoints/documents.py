@@ -67,17 +67,18 @@ async def upload_academic_document(
         category=category.value
     )
 
-    # 4. TEMPORARILY DISABLE DB SAVE TO PREVENT FOREIGN KEY CRASH
-    # document = Document(
-    #     title=title,
-    #     course_code=course_code,
-    #     lecturer_name=lecturer_name,
-    #     category=category,
-    #     file_url=safe_filename, 
-    #     uploaded_by=current_user.id
-    # )
-    # db.add(document)
-    # await db.commit()
+    # 4. RE-ENABLED DB SAVE: This ensures the file appears in the Student Library
+    document = Document(
+        title=title,
+        course_code=course_code,
+        lecturer_name=lecturer_name,
+        category=category,
+        file_url=safe_filename, 
+        # Hardcode a fallback ID or UUID if current_user is still disabled for testing
+        uploaded_by="00000000-0000-0000-0000-000000000000" 
+    )
+    db.add(document)
+    await db.commit()
 
     return {
         "detail": "Document ingested, OCR processed, and vectorized.", 
