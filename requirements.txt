@@ -73,9 +73,8 @@ websockets==17.2
 zopfli==0.4.3
 PyMuPDF
 fpdf2
+pinecone
 pytesseract
 pdf2image
-pinecone-client
-fpdf2
-PyMuPDF
+pinecone
 psycopg2-binary
