@@ -13,7 +13,9 @@ router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    # Truncate password to avoid bcrypt's 72-byte limit
+    safe_password = password[:72]
+    return pwd_context.hash(safe_password)
 
 # Pydantic schema for incoming registration data
 class UserCreate(BaseModel):
@@ -34,6 +36,9 @@ class UserLogin(BaseModel):
 async def login_user(user_in: UserLogin, db: AsyncSession = Depends(get_db)):
     # Force email to lowercase for case-insensitive matching
     user_in.email = user_in.email.lower()
+    
+    # Truncate the password to 72 bytes so it perfectly matches the hashed logic
+    safe_password = user_in.password[:72]
 
     # 1. Fetch the user by email
     stmt = select(User).where(User.email == user_in.email)
@@ -44,14 +49,14 @@ async def login_user(user_in: UserLogin, db: AsyncSession = Depends(get_db)):
     print(f"DEBUG: Looking for email -> {user_in.email}")
     if not user:
         print("DEBUG: Failed! Email not found in the database.")
-    elif not pwd_context.verify(user_in.password, user.hashed_password):
+    elif not pwd_context.verify(safe_password, user.hashed_password):
         print("DEBUG: Failed! Email found, but password did not match.")
     else:
         print("DEBUG: Success! Email and password match.")
     # -----------------------
 
     # 2. Verify user exists and password matches
-    if not user or not pwd_context.verify(user_in.password, user.hashed_password):
+    if not user or not pwd_context.verify(safe_password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication failed. Check your credentials."
@@ -85,7 +90,7 @@ async def register_user(user_in: UserCreate, db: AsyncSession = Depends(get_db))
             detail="An account with this email already exists in the system."
         )
 
-    # 2. Hash the password
+    # 2. Hash the password safely
     hashed_password = get_password_hash(user_in.password)
 
     # 3. Save the new user to the database
