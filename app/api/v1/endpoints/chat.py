@@ -15,7 +15,6 @@ from app.models.user import User
 from app.models.chat import ChatSession, ChatMessage
 from openai import AsyncOpenAI
 
-# Import the PDF library we just installed
 try:
     from fpdf import FPDF
     HAS_FPDF = True
@@ -29,7 +28,7 @@ openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 class ChatRequest(BaseModel):
     message: str
     course_code: Optional[str] = None
-    session_id: Optional[str] = None  # Added so we can continue existing chats!
+    session_id: Optional[str] = None 
 
 class ImageRequest(BaseModel):
     prompt: str
@@ -39,17 +38,15 @@ class PDFRequest(BaseModel):
     content: str
 
 
-# --- 1. CHAT HISTORY ROUTES (For the Sidebar) ---
+# --- 1. CHAT HISTORY ROUTES ---
 @router.get("/sessions")
 async def get_chat_sessions(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    """Fetch all chat sessions for the sidebar history."""
     stmt = select(ChatSession).where(ChatSession.user_id == current_user.id).order_by(ChatSession.updated_at.desc())
     result = await db.execute(stmt)
     return {"sessions": result.scalars().all()}
 
 @router.get("/sessions/{session_id}")
 async def get_session_messages(session_id: str, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    """Fetch all messages inside a specific session."""
     stmt = select(ChatSession).where(ChatSession.id == uuid.UUID(session_id), ChatSession.user_id == current_user.id)
     session = (await db.execute(stmt)).scalar_one_or_none()
     
@@ -62,12 +59,11 @@ async def get_session_messages(session_id: str, current_user: User = Depends(get
 
 
 # --- 2. OPENAI IMAGE GENERATION ROUTE ---
-# --- 2. OPENAI IMAGE GENERATION ROUTE ---
 @router.post("/image")
 async def generate_image(request: ImageRequest, current_user: User = Depends(get_current_user)):
     try:
         response = await openai_client.images.generate(
-            model="gpt-image-2.5-flare", # Replaces the deprecated DALL-E models
+            model="dall-e-3", 
             prompt=request.prompt,
             size="1024x1024",
             n=1,
@@ -76,12 +72,13 @@ async def generate_image(request: ImageRequest, current_user: User = Depends(get
     except Exception as e:
         error_msg = str(e).lower()
         if "billing" in error_msg or "tier" in error_msg or "quota" in error_msg:
-            raise HTTPException(status_code=402, detail="OpenAI Billing Error: Verify your $5 credit is active.")
+            raise HTTPException(status_code=402, detail="OpenAI Billing Error: Verify your limits.")
         raise HTTPException(status_code=500, detail=f"Image generation failed: {str(e)}")
+
+
 # --- 3. PDF GENERATION ROUTE ---
 @router.post("/pdf")
 async def generate_pdf(request: PDFRequest, current_user: User = Depends(get_current_user)):
-    """Converts the AI's markdown report into a downloadable PDF."""
     if not HAS_FPDF:
         raise HTTPException(status_code=500, detail="FPDF is missing. Run: pip install fpdf2")
     
@@ -97,7 +94,6 @@ async def generate_pdf(request: PDFRequest, current_user: User = Depends(get_cur
         
         # Add Body Content
         pdf.set_font("helvetica", size=11)
-        # Encode and decode to handle potential special characters gracefully
         safe_content = request.content.encode('latin-1', 'replace').decode('latin-1')
         pdf.multi_cell(0, 8, safe_content)
         
@@ -134,7 +130,7 @@ async def chat_stream(request: ChatRequest, current_user: User = Depends(get_cur
     db.add(user_msg)
     await db.commit()
 
-    # 3. Pinecone Context 
+    # 3. Pinecone Context Retrieval
     try:
         embed_res = await openai_client.embeddings.create(
             input=request.message,
@@ -149,13 +145,14 @@ async def chat_stream(request: ChatRequest, current_user: User = Depends(get_cur
     except Exception:
         joined_context = "No archive context found."
 
-    # 4. System Prompt
+    # 4. System Prompt Design
     system_prompt = f"""You are Corex AI, the official academic archive assistant for {current_user.full_name}.
 
     INTENT DETECTION RULES:
-    1. IMAGE GENERATION: To draw an image, reply with a vivid description and output EXACTLY: [TRIGGER_IMAGE_GENERATION: <prompt>]
-    2. PDF GENERATION: To generate a PDF report, output EXACTLY: [TRIGGER_PDF_GENERATION]
-    3. RESEARCH REPORTS: Ask for Title, Course Code, Student Name, Matric Number, Department, and Lecturer Name. Once provided, write a deeply analytical academic report.
+    1. GENERAL INQUIRY: Answer directly using the provided academic context. Be concise and thorough.
+    2. IMAGE GENERATION: To draw an image, reply with a vivid description and output EXACTLY: [TRIGGER_IMAGE_GENERATION: <prompt>]
+    3. PDF GENERATION: To generate a PDF report, output EXACTLY: [TRIGGER_PDF_GENERATION]
+    4. RESEARCH REPORTS: Ask for Title, Course Code, Student Name, Matric Number, Department, and Lecturer Name. Once provided, write a deeply analytical academic report and trigger the PDF tag.
 
     CONTEXT:
     {joined_context}
