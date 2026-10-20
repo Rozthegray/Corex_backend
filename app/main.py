@@ -55,18 +55,21 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 # app.add_middleware(IdempotencyMiddleware)
 
 # 5. Add CORSMiddleware LAST so it sits on the absolute outside to intercept browser preflights
+# 5. Add CORSMiddleware LAST so it sits on the absolute outside to intercept browser preflights
 origins = [
     "http://localhost:3000",
     "http://localhost:3001",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:3001",
-    "https://corex-frontend-rose.vercel.app",  # Added your live Vercel domain
-    "*"  # Added wildcard to support dynamic Vercel deployment preview URLs
+    "https://corex-frontend-rose.vercel.app"
+    # DO NOT use "*" here when allow_credentials=True
 ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    # This regex allows ANY dynamic Vercel preview branch for your frontend
+    allow_origin_regex=r"https://corex-frontend-.*\.vercel\.app", 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
