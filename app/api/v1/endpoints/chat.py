@@ -145,6 +145,8 @@ async def chat_stream(request: ChatRequest, current_user: User = Depends(get_cur
     except Exception:
         joined_context = "No archive context found."
 
+    # ... inside chat_stream route, after retrieving Pinecone Context ...
+
     # 4. System Prompt Design
     system_prompt = f"""You are Corex AI, the official academic archive assistant for {current_user.full_name}.
 
@@ -153,10 +155,14 @@ async def chat_stream(request: ChatRequest, current_user: User = Depends(get_cur
     2. IMAGE GENERATION: To draw an image, reply with a vivid description and output EXACTLY: [TRIGGER_IMAGE_GENERATION: <prompt>]
     3. PDF GENERATION: To generate a PDF report, output EXACTLY: [TRIGGER_PDF_GENERATION]
     4. RESEARCH REPORTS: Ask for Title, Course Code, Student Name, Matric Number, Department, and Lecturer Name. Once provided, write a deeply analytical academic report and trigger the PDF tag.
+    5. MOCK EXAM GENERATION: If the user asks for mock questions or practice questions based on past questions, DO NOT return the exact past questions verbatim. Instead, generate NEW tricky variants:
+       - For Mathematics/Science problems: Change the values, variables, or the requested pattern while maintaining the core concept.
+       - For Theoretical/Word problems: Alter the wording to make it tricky or frame the question from a different angle to test deep understanding.
 
-    CONTEXT:
+    CONTEXT FROM ARCHIVES:
     {joined_context}
     """
+
 
     # 5. Stream the Response
     async def event_generator():
