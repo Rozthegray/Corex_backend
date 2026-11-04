@@ -1,10 +1,12 @@
 import io
+import os
 import pymupdf as fitz
 import pytesseract
 from PIL import Image
 
-# Configure Tesseract path for your Windows environment
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+# Configure Tesseract path conditionally for local Windows development
+if os.name == 'nt':
+    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 def extract_multimodal_content(file_bytes: bytes, filename: str) -> str:
     """Extracts text from PDFs, OCRs embedded images, or OCRs standalone images."""
