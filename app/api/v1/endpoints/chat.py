@@ -145,8 +145,6 @@ async def chat_stream(request: ChatRequest, current_user: User = Depends(get_cur
     except Exception:
         joined_context = "No archive context found."
 
-    # ... inside chat_stream route, after retrieving Pinecone Context ...
-
     # 4. System Prompt Design
     system_prompt = f"""You are Corex AI, the official academic archive assistant for {current_user.full_name}.
 
@@ -162,7 +160,6 @@ async def chat_stream(request: ChatRequest, current_user: User = Depends(get_cur
     CONTEXT FROM ARCHIVES:
     {joined_context}
     """
-
 
     # 5. Stream the Response
     async def event_generator():
@@ -190,6 +187,8 @@ async def chat_stream(request: ChatRequest, current_user: User = Depends(get_cur
             await db.commit()
             
         except Exception as e:
-            yield f"data: {json.dumps({'text': f'\\n\\n[Error: {str(e)}]'})}\n\n"
+            # Construct the payload outside the f-string to avoid backslash syntax errors in Python 3.11
+            error_payload = {"text": f"\n\n[Error: {str(e)}]"}
+            yield f"data: {json.dumps(error_payload)}\n\n"
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
